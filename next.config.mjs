@@ -1,4 +1,16 @@
 /** @type {import('next').NextConfig} */
+const securityHeaders = [
+  // Ép tất cả request http thành https
+  { key: 'Content-Security-Policy', value: "upgrade-insecure-requests" },
+  // Luôn dùng HTTPS cho 1 năm, áp dụng cho subdomain
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
+  // Các header bảo mật bổ sung
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+];
+
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -9,6 +21,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+  async headers() {
+    return [
+      {
+        source: '/(.*)',   // áp dụng cho tất cả route
+        headers: securityHeaders,
+      },
+    ];
+  },
+};
 
-export default nextConfig
+export default nextConfig;
