@@ -1,6 +1,14 @@
-import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles } from "lucide-react"
-import Link from "next/link"
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles } from "lucide-react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+
+// Import động để tránh SSR cho three.js
+const ModelViewer3D = dynamic(() => import("./ModelViewer3D"), {
+  ssr: false,
+});
 
 export function Hero() {
   return (
@@ -9,7 +17,9 @@ export function Hero() {
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center space-x-2 bg-card/50 backdrop-blur-sm rounded-full px-4 py-2 mb-8 border border-border">
             <Sparkles className="h-4 w-4 text-primary twinkle-animation" />
-            <span className="text-sm text-muted-foreground">Công nghệ in 3D từ nhựa tái chế</span>
+            <span className="text-sm text-muted-foreground">
+              Công nghệ in 3D từ nhựa tái chế
+            </span>
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 text-balance">
@@ -34,19 +44,11 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Hero 3D Preview */}
+        {/* Hero 3D Preview: thay khối placeholder bằng ModelViewer3D */}
         <div className="mt-16 relative">
-          <div className="w-full max-w-2xl mx-auto h-96 bg-card/30 backdrop-blur-sm rounded-2xl border border-border flex items-center justify-center float-animation">
-            <div className="text-center">
-              <div className="w-32 h-32 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <div className="w-16 h-16 bg-primary rounded-lg"></div>
-              </div>
-              <p className="text-muted-foreground">3D Product Preview</p>
-              <p className="text-sm text-muted-foreground mt-2">Sẽ hiển thị mô hình 3D tương tác</p>
-            </div>
-          </div>
+          <ModelViewer3D />
         </div>
       </div>
     </section>
-  )
+  );
 }
