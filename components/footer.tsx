@@ -10,9 +10,9 @@ export function Footer() {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">E</span>
+                <span className="text-primary-foreground font-bold text-sm">S</span>
               </div>
-              <h3 className="text-xl font-bold text-foreground">EcoSpace 3D</h3>
+              <h3 className="text-xl font-bold text-foreground">Seli Store</h3>
             </div>
             <p className="text-muted-foreground mb-4 max-w-md">
               Tạo ra những sản phẩm độc đáo từ nhựa tái chế với công nghệ in 3D hiện đại. Bảo vệ môi trường, thể hiện cá
@@ -90,7 +90,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center">
-          <p className="text-muted-foreground text-sm">© 2024 EcoSpace 3D. Tất cả quyền được bảo lưu.</p>
+          <p className="text-muted-foreground text-sm">© 2025 Seli Store. Tất cả quyền được bảo lưu.</p>
         </div>
       </div>
     </footer>

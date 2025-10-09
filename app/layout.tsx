@@ -7,7 +7,7 @@ import { Suspense } from "react"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "EcoSpace 3D - Sản phẩm tái chế tùy chỉnh",
+  title: "Seli 3D - Sản phẩm tái chế tùy chỉnh",
   description: "Tạo và tùy chỉnh sản phẩm 3D từ nhựa tái chế với công nghệ in 3D hiện đại",
   generator: "v0.app",
 }

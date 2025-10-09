@@ -30,7 +30,7 @@ export function Features() {
       <div className="container mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Tại sao chọn <span className="text-primary">EcoSpace 3D</span>?
+            Tại sao chọn <span className="text-primary">Seli Store</span> ?
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Chúng tôi kết hợp công nghệ hiện đại với trách nhiệm môi trường
