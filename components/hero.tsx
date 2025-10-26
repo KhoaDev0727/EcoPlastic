@@ -1,18 +1,30 @@
+// components/hero.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
-// Import động để tránh SSR cho three.js
-const ModelViewer3D = dynamic(() => import("./ModelViewer3D"), {
-  ssr: false,
-});
+const banners = [
+  { src: "/banner1.png", alt: "Sản phẩm 3D từ nhựa tái chế" },
+  { src: "/banner2.png", alt: "Tùy chỉnh sản phẩm độc đáo" },
+];
 
 export function Hero() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Tự động chuyển banner mỗi 4 giây
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % banners.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <section className="pt-24 pb-16 px-4">
+    <section className="pt-24 pb-16 px-4 overflow-hidden">
       <div className="container mx-auto text-center">
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center space-x-2 bg-card/50 backdrop-blur-sm rounded-full px-4 py-2 mb-8 border border-border">
@@ -31,7 +43,7 @@ export function Hero() {
             trang trí, tất cả đều được in 3D từ nhựa tái chế.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
             <Link href="/customize">
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8">
                 Bắt đầu tùy chỉnh
@@ -44,9 +56,49 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Hero 3D Preview: thay khối placeholder bằng ModelViewer3D */}
-        <div className="mt-16 relative">
-          <ModelViewer3D />
+        {/* === BANNER SLIDER FULL WIDTH === */}
+        <div className="relative -mx-4 md:-mx-8 lg:-mx-12 xl:-mx-16">
+          <div className="relative w-full h-96 md:h-[500px] overflow-hidden rounded-3xl shadow-2xl">
+            {/* Background gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-10 pointer-events-none" />
+
+            {/* Banner Images */}
+            <div className="relative w-full h-full">
+              {banners.map((banner, index) => (
+                <div
+                  key={index}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${
+                    index === currentIndex ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  <Image
+                    src={banner.src}
+                    alt={banner.alt}
+                    fill
+                    priority
+                    className="object-cover"
+                    sizes="100vw"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Dots Indicator */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
+              {banners.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentIndex
+                      ? "bg-white w-8"
+                      : "bg-white/60 hover:bg-white/80"
+                  }`}
+                  aria-label={`Banner ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>

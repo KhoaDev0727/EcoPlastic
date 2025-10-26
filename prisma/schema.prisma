@@ -1,0 +1,67 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+  // BỎ output → để mặc định (tránh lỗi Vercel)
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// === SCHEMA CỦA BẠN (giữ nguyên) ===
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+}
+
+model Product {
+  id        Int         @id @default(autoincrement())
+  name      String
+  slug      String      @unique
+  price     Int        
+  fbxPath   String     
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  OrderItem OrderItem[]
+}
+
+model Order {
+  id           Int         @id @default(autoincrement())
+  status       OrderStatus @default(PENDING)
+  customerName String
+  email        String
+  phone        String?
+  address      String?
+  totalPrice   Int
+  note         String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  items        OrderItem[]
+}
+
+model OrderItem {
+  id          Int     @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  productName String? 
+  quantity    Int     @default(1)
+  unitPrice   Int
+  colorHex    String?
+  stickers    Json?   @default("[]")
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id])
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Account {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN") 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
