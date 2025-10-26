@@ -1,22 +1,5 @@
 {
-  "node": {
-    "01f06649c09a6dec2da315cca058c36217ab3fb7": {
-      "workers": {
-        "app/admin/dashboard/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22D%3A%5C%5CEXE101-WorkSpace%5C%5CEcoPlastic%5C%5Capp%5C%5Cadmin%5C%5Cdashboard%5C%5Cpage.tsx%22%2C%5B%22%24%24ACTION_1%22%2C%22%24%24ACTION_0%22%5D%5D%5D&__client_imported__=!"
-      },
-      "layer": {
-        "app/admin/dashboard/page": "rsc"
-      }
-    },
-    "58364e50a92f1d3ca29a58451a9d25f6436d1a20": {
-      "workers": {
-        "app/admin/dashboard/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22D%3A%5C%5CEXE101-WorkSpace%5C%5CEcoPlastic%5C%5Capp%5C%5Cadmin%5C%5Cdashboard%5C%5Cpage.tsx%22%2C%5B%22%24%24ACTION_1%22%2C%22%24%24ACTION_0%22%5D%5D%5D&__client_imported__=!"
-      },
-      "layer": {
-        "app/admin/dashboard/page": "rsc"
-      }
-    }
-  },
+  "node": {},
   "edge": {},
-  "encryptionKey": "xJNQL03AxgAG3fQue38YT6CA4YUDcQgE179C5dKMrDY="
+  "encryptionKey": "y/wXLVPsYaibQ+eCIPVhkjVTkr1N3qfV3FQ57367xYw="
 }

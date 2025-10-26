@@ -1,4 +1,4 @@
-// File: D:\EXE101-WorkSpace\EcoPlastic\app\page.tsx
+// File: D:\EXE-WorkSpace\GroupProject\EcoPlastic\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
