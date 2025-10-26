@@ -2,13 +2,15 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
+console.log("DATABASE_URL:", process.env.DATABASE_URL ? "OK" : "MISSING");
+
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("Seeding admin account...");
   const hashed = await bcrypt.hash("Admin123@", 10);
 
-  await prisma.account.upsert({
+  const admin = await prisma.account.upsert({
     where: { email: "secondlifeplastic@seli.id.vn" },
     update: { password: hashed },
     create: {
@@ -18,7 +20,7 @@ async function main() {
     },
   });
 
-  console.log("Admin account created/updated!");
+  console.log("Admin ready:", admin.email);
   await prisma.$disconnect();
 }
 
