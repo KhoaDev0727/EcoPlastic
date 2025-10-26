@@ -13,3 +13,5 @@ lib/generated/
 
 # Node
 node_modules/
+.vercel
+.env*.local
