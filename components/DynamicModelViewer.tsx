@@ -11,24 +11,28 @@ import * as THREE from "three";
 function parseColorWithAlpha(input?: string) {
   const fallback = { hex: "#ffffff", opacity: 1 };
   if (!input || typeof input !== "string") return fallback;
-
   const s = input.trim();
-  if (/^#([0-9a-fA-F]{6})$/.test(s)) {
-    return { hex: s, opacity: 1 };
-  }
+  if (/^#([0-9a-fA-F]{6})$/.test(s)) return { hex: s, opacity: 1 };
   if (/^#([0-9a-fA-F]{8})$/.test(s)) {
-    const hex = `#${s.slice(1, 7)}`; // RRGGBB
-    const aa = parseInt(s.slice(7, 9), 16); // AA
-    const opacity = Math.max(0, Math.min(1, aa / 255));
-    return { hex, opacity };
+    const hex = `#${s.slice(1, 7)}`;
+    const aa = parseInt(s.slice(7, 9), 16);
+    return { hex, opacity: Math.max(0, Math.min(1, aa / 255)) };
   }
-  // Hỗ trợ tên màu CSS cơ bản
   try {
     const c = new THREE.Color(s);
     return { hex: `#${c.getHexString()}`, opacity: 1 };
   } catch {
     return fallback;
   }
+}
+
+/** Lấy đúng tên file .fbx cuối cùng và ép thành "/<basename>.fbx" */
+function normalizeFbxPath(raw?: string) {
+  if (!raw || typeof raw !== "string") return "";
+  const m = raw.match(/[^/\\]+\.fbx$/i);
+  if (!m) return "";
+  // Giữ nguyên hoa/thường (Linux/Vercel phân biệt)
+  return `/${m[0]}`;
 }
 
 function Loader() {
@@ -45,7 +49,7 @@ function Loader() {
 function ErrorBox({ message }: { message: string }) {
   return (
     <Html center>
-      <div className="px-3 py-2 rounded-md bg-red-500/10 border border-red-500 text-red-500 text-sm max-w-[360px]">
+      <div className="px-3 py-2 rounded-md bg-red-500/10 border border-red-500 text-red-500 text-sm max-w-[380px]">
         {message}
       </div>
     </Html>
@@ -56,46 +60,43 @@ function FBXPrimitive({ url, color }: { url: string; color: string }) {
   const groupRef = useRef<THREE.Group>(null);
   const [obj, setObj] = useState<THREE.Group | null>(null);
   const [err, setErr] = useState<string | null>(null);
-
-  // Chuẩn hóa màu (hỗ trợ #RRGGBBAA)
   const { hex, opacity } = useMemo(() => parseColorWithAlpha(color), [color]);
 
   useEffect(() => {
     let alive = true;
-
     (async () => {
       try {
-        if (!url || typeof url !== "string") throw new Error(`fbxPath rỗng hoặc không hợp lệ: ${String(url)}`);
+        if (!url) throw new Error("fbxPath rỗng hoặc không phải .fbx");
 
-        // 1) Fetch thủ công để tự kiểm soát payload
+        // Fetch thủ công để kiểm soát payload
         const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status} khi tải ${url}`);
+        const status = res.status;
         const ct = res.headers.get("content-type") || "";
+        if (!res.ok) throw new Error(`HTTP ${status} khi tải ${url}`);
+
         const buf = await res.arrayBuffer();
 
-        // 2) Kiểm tra header FBX Binary
+        // Kiểm tra header Binary FBX
         const head = new TextDecoder().decode(new Uint8Array(buf.slice(0, 24)));
         if (!head.includes("Kaydara FBX Binary")) {
           throw new Error(
-            `Payload không phải FBX Binary (header=${JSON.stringify(head)}, content-type="${ct}")`
+            `Payload không phải FBX Binary (status=${status}, header=${JSON.stringify(
+              head
+            )}, content-type="${ct}")`
           );
         }
 
-        // 3) Parse buffer bằng FBXLoader.parse (đồng bộ với three@0.160.0)
         const loader = new FBXLoader();
-        const model = loader.parse(buf, ""); // basePath rỗng vì đã có buffer
+        const model = loader.parse(buf, "");
 
-        // 4) Setup vật liệu + màu/alpha, shadow
         model.traverse((o: any) => {
           if (o.isMesh) {
             o.castShadow = true;
             o.receiveShadow = true;
-
             const mats: THREE.Material[] = Array.isArray(o.material) ? o.material : [o.material];
             mats.forEach((m: any) => {
               if (m && "color" in m && m.color instanceof THREE.Color) {
                 m.color = new THREE.Color(hex);
-                // Alpha từ #RRGGBBAA → opacity
                 if (opacity < 1) {
                   m.transparent = true;
                   m.opacity = opacity;
@@ -106,7 +107,6 @@ function FBXPrimitive({ url, color }: { url: string; color: string }) {
           }
         });
 
-        // 5) Scale nhẹ cho an toàn
         model.scale.setScalar(0.01);
 
         if (alive) {
@@ -121,7 +121,6 @@ function FBXPrimitive({ url, color }: { url: string; color: string }) {
 
     return () => {
       alive = false;
-      // Dọn tài nguyên khi unmount
       if (groupRef.current) {
         groupRef.current.traverse((o: any) => {
           if (o.isMesh) {
@@ -129,9 +128,7 @@ function FBXPrimitive({ url, color }: { url: string; color: string }) {
             const mats = Array.isArray(o.material) ? o.material : [o.material];
             mats?.forEach((m: any) => {
               m?.map?.dispose?.();
-              m?.lightMap?.dispose?.();
               m?.normalMap?.dispose?.();
-              m?.bumpMap?.dispose?.();
               m?.roughnessMap?.dispose?.();
               m?.metalnessMap?.dispose?.();
               m?.dispose?.();
@@ -155,13 +152,9 @@ interface DynamicModelViewerProps {
 
 export default function DynamicModelViewer({
   fbxPath,
-  color = "#cf05beff", // có AA ở cuối cũng OK: ta sẽ tách alpha
+  color = "#cf05beff",
 }: DynamicModelViewerProps) {
-  // Ép path về dạng "/x.fbx" (tránh "public/..." hoặc tương đối)
-  const safePath = useMemo(() => {
-    if (typeof fbxPath !== "string") return "";
-    return fbxPath.startsWith("/") ? fbxPath : `/${fbxPath}`;
-  }, [fbxPath]);
+  const safePath = useMemo(() => normalizeFbxPath(fbxPath), [fbxPath]);
 
   return (
     <div className="w-full h-full bg-gradient-to-b from-card/50 to-card rounded-2xl overflow-hidden">
@@ -169,7 +162,6 @@ export default function DynamicModelViewer({
         <ambientLight intensity={0.7} />
         <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow />
 
-        {/* Không dùng Suspense cho fetch thủ công */}
         <Center>
           <FBXPrimitive url={safePath} color={color} />
         </Center>
