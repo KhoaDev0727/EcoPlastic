@@ -7,32 +7,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import * as THREE from "three";
 
-/** Parse color string (#RRGGBB | #RRGGBBAA) -> { hex, opacity } */
-function parseColorWithAlpha(input?: string) {
-  const fallback = { hex: "#ffffff", opacity: 1 };
-  if (!input || typeof input !== "string") return fallback;
-  const s = input.trim();
-  if (/^#([0-9a-fA-F]{6})$/.test(s)) return { hex: s, opacity: 1 };
-  if (/^#([0-9a-fA-F]{8})$/.test(s)) {
-    const hex = `#${s.slice(1, 7)}`;
-    const aa = parseInt(s.slice(7, 9), 16);
-    return { hex, opacity: Math.max(0, Math.min(1, aa / 255)) };
-  }
-  try {
-    const c = new THREE.Color(s);
-    return { hex: `#${c.getHexString()}`, opacity: 1 };
-  } catch {
-    return fallback;
-  }
-}
-
 /** Lấy đúng tên file .fbx cuối cùng và ép thành "/<basename>.fbx" */
 function normalizeFbxPath(raw?: string) {
   if (!raw || typeof raw !== "string") return "";
   const m = raw.match(/[^/\\]+\.fbx$/i);
   if (!m) return "";
-  // Giữ nguyên hoa/thường (Linux/Vercel phân biệt)
-  return `/${m[0]}`;
+  return `/${m[0]}`; // giữ nguyên hoa/thường
 }
 
 function Loader() {
@@ -56,11 +36,10 @@ function ErrorBox({ message }: { message: string }) {
   );
 }
 
-function FBXPrimitive({ url, color }: { url: string; color: string }) {
+function FBXPrimitive({ url }: { url: string }) {
   const groupRef = useRef<THREE.Group>(null);
   const [obj, setObj] = useState<THREE.Group | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const { hex, opacity } = useMemo(() => parseColorWithAlpha(color), [color]);
 
   useEffect(() => {
     let alive = true;
@@ -89,25 +68,32 @@ function FBXPrimitive({ url, color }: { url: string; color: string }) {
         const loader = new FBXLoader();
         const model = loader.parse(buf, "");
 
+        // KHÔNG gán màu ở đây nữa (để dành cho trang customize)
+        // Chỉ bật shadow flags
         model.traverse((o: any) => {
           if (o.isMesh) {
             o.castShadow = true;
             o.receiveShadow = true;
-            const mats: THREE.Material[] = Array.isArray(o.material) ? o.material : [o.material];
-            mats.forEach((m: any) => {
-              if (m && "color" in m && m.color instanceof THREE.Color) {
-                m.color = new THREE.Color(hex);
-                if (opacity < 1) {
-                  m.transparent = true;
-                  m.opacity = opacity;
-                }
-                m.needsUpdate = true;
-              }
-            });
           }
         });
 
-        model.scale.setScalar(0.01);
+        // --- AUTO SCALE + CENTER ---
+        // 1) Đưa model về origin
+        const box = new THREE.Box3().setFromObject(model);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        model.position.sub(center); // dịch để tâm về (0,0,0)
+
+        // 2) Chuẩn hóa kích thước: đặt cạnh dài nhất = targetSize
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const longest = Math.max(size.x, size.y, size.z) || 1;
+        const targetSize = 1.6; // tuỳ chỉnh: ~1.6 đơn vị cho mọi model
+        const scale = targetSize / longest;
+        model.scale.setScalar(scale);
+
+        // (Optional) tính lại box sau scale để đảm bảo
+        // const box2 = new THREE.Box3().setFromObject(model);
 
         if (alive) {
           setObj(model);
@@ -121,6 +107,7 @@ function FBXPrimitive({ url, color }: { url: string; color: string }) {
 
     return () => {
       alive = false;
+      // Dọn tài nguyên khi unmount
       if (groupRef.current) {
         groupRef.current.traverse((o: any) => {
           if (o.isMesh) {
@@ -137,7 +124,7 @@ function FBXPrimitive({ url, color }: { url: string; color: string }) {
         });
       }
     };
-  }, [url, hex, opacity]);
+  }, [url]);
 
   if (err) return <ErrorBox message={err} />;
   if (!obj) return <Loader />;
@@ -147,13 +134,11 @@ function FBXPrimitive({ url, color }: { url: string; color: string }) {
 
 interface DynamicModelViewerProps {
   fbxPath: string;
-  color?: string;
+  // KHÔNG nhận/áp dụng color ở viewer nữa
 }
 
-export default function DynamicModelViewer({
-  fbxPath,
-  color = "#cf05beff",
-}: DynamicModelViewerProps) {
+export default function DynamicModelViewer({ fbxPath }: DynamicModelViewerProps) {
+  // Ép path về dạng "/<basename>.fbx"
   const safePath = useMemo(() => normalizeFbxPath(fbxPath), [fbxPath]);
 
   return (
@@ -163,7 +148,7 @@ export default function DynamicModelViewer({
         <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow />
 
         <Center>
-          <FBXPrimitive url={safePath} color={color} />
+          <FBXPrimitive url={safePath} />
         </Center>
 
         <OrbitControls enablePan={false} makeDefault />
